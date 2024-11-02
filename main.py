@@ -4,16 +4,15 @@ import time
 
 arduino = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.1)
 time.sleep(2)
+print("Connection to Arduino established.")
 
 pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
 
-cap = cv2.VideoCapture(2)  
-
-traffic_light_status = "red"
+cap = cv2.VideoCapture(0)
 
 while True:
     if arduino.in_waiting > 0:
-        traffic_light_status = arduino.readline().decoode().strip()
+        traffic_light_status = arduino.readline().decode().strip()
         print("Traffic light status: ", traffic_light_status)
 
         if traffic_light_status == "Red light":
