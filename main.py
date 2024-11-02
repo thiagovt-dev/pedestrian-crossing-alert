@@ -2,7 +2,7 @@ import cv2
 
 pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
 
-cap = cv2.VideoCapture(0)  
+cap = cv2.VideoCapture(2)  
 
 traffic_light_status = "red"
 
