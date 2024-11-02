@@ -1,4 +1,9 @@
 import cv2
+import serial
+import time
+
+arduino = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.1)
+time.sleep(2)
 
 pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
 
@@ -7,28 +12,37 @@ cap = cv2.VideoCapture(2)
 traffic_light_status = "red"
 
 while True:
-    if traffic_light_status == "red":
-        print("Traffic light is red. Starting pedestrian monitoring...")
+    if arduino.in_waiting > 0:
+        traffic_light_status = arduino.readline().decoode().strip()
+        print("Traffic light status: ", traffic_light_status)
 
-        ret, frame = cap.read()
-        if not ret:
-            print("Error capturing video.")
-            break
+        if traffic_light_status == "Red light":
+            print("Traffic light is red. Starting pedestrian monitoring...")
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            ret, frame = cap.read()
+            if not ret:
+                print("Error capturing video.")
+                break
 
-        pedestrians = pedestrian_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        for (x, y, w, h) in pedestrians:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-            print("Pedestrian detected at red light!")
+            pedestrians = pedestrian_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4)
+            
+            if len(pedestrians) > 0:
+                for (x, y, w, h) in pedestrians:
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                    print("Pedestrian detected at red light!")
+                    arduino.write(b'1')
+            else:
+                print("No pedestrians detected at red light.")
+                arduino.write(b'0')
+            cv2.imshow('Pedestrian Detection', frame)
 
-        cv2.imshow('Pedestrian Detection', frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    else:
-        print("Traffic light is green or yellow. Waiting for it to turn red.")
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            print("Traffic light is green or yellow. Waiting for it to turn red.")
 
 cap.release()
 cv2.destroyAllWindows()
+arduino.close()
