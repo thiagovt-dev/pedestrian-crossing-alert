@@ -6,7 +6,7 @@ arduino = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.1)
 time.sleep(2)
 print("Connection to Arduino established.")
 
-pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_alt2.xml')
+pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -19,23 +19,24 @@ while True:
         print("Error capturing video.")
         break
 
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    pedestrians = pedestrian_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4)
+
+    for (x, y, w, h) in pedestrians:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
     if arduino.in_waiting > 0:
         traffic_light_status = arduino.readline().decode('utf-8', errors='replace').strip()
         print("Traffic light status:", traffic_light_status)
 
-        if traffic_light_status == "Green light":
-            print("Traffic light is green to cars. Monitoring for pedestrians...")
-
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            pedestrians = pedestrian_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4)
+        if traffic_light_status in ["Green light", "Yellow light"]:
+            print("Traffic light is green/yellow to cars. Monitoring for pedestrians...")
 
             if len(pedestrians) > 0:
-                for (x, y, w, h) in pedestrians:
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-                print("Pedestrian detected at green light!")
-                arduino.write(b'1')
+                print("Pedestrian detected!")
+                arduino.write(b'1')  
             else:
-                arduino.write(b'0')
+                arduino.write(b'0')  
 
     cv2.imshow('Pedestrian Detection', frame)
 
