@@ -6,7 +6,7 @@ arduino = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.1)
 time.sleep(2)
 print("Connection to Arduino established.")
 
-pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+pedestrian_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
 
 cap = cv2.VideoCapture(0) # change to your video source 
 if not cap.isOpened():
